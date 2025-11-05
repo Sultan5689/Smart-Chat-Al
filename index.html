@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ذكي - مساعدك الشخصي الذكي</title>
+    <!-- تحميل Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <!-- أيقونات Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* =============================================== */
+        /* تعريف الثوابت والألوان الموحدة (Emerald Green Accent) */
+        /* =============================================== */
+        :root {
+            --primary-color: #10b981; /* Emerald-500 - اللون الأخضر الجديد للأزرار والأكشن */
+            --accent-color: #dc2626; /* Red-600 - يُستخدم للمايكروفون والتنبيهات */
+            --bg-dark: #111827; /* Gray-900 - الخلفية الداكنة */
+            --bg-card: #1f2937; /* Gray-800 - خلفية البطاقات/المدخل */
+            --text-color: #f3f4f6; /* Gray-100 */
+            --saudi-green: #006C35; /* لون العلم السعودي (للتأثير في Splash) */
+            --saudi-white: #FFFFFF;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            margin: 0;
+            padding: 0;
+            /* مهم جداً لضمان عمل الواجهة على الأجهزة المحمولة وشاشات التلفزيون */
+            height: 100vh; 
+            width: 100vw;
+            overflow: hidden; /* منع التمرير على مستوى Body */
+        }
+
+        /* =============================================== */
+        /* إضافة لون التحديد الأخضر حسب طلب المستخدم */
+        /* =============================================== */
+        ::selection {
+            background: var(--primary-color); /* أخضر زمردي */
+            color: var(--saudi-white); /* نص أبيض */
+        }
+        ::-moz-selection {
+            background: var(--primary-color);
+            color: var(--saudi-white);
+        }
+        
+        /* حاوية التطبيق الرئيسية: يجب أن تكون مرنة وتملأ الشاشة */
+        .app-container {
+            width: 100%; 
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-dark); /* تم تعديل هذا ليتطابق مع الخلفية */
+            /* تحديد عرض أقصى للحاوية الرئيسية على الشاشات الكبيرة */
+            max-width: 1200px; 
+            margin: 0 auto; /* توسيط الحاوية */
+            border-radius: 0;
+        }
+        
+        /* ضبط الحاوية الرئيسية للهواتف الذكية (لتغطية العرض بالكامل) */
+        @media (max-width: 768px) {
+            .app-container {
+                max-width: 100%;
+                border-radius: 0;
+            }
+        }
+
+        /* نافذة الدردشة: يجب أن تأخذ المساحة المتبقية والقابلة للتمرير */
+        #chat-window {
+            flex-grow: 1; 
+            overflow-y: auto;
+            position: relative;
+            padding: 1rem 1.5rem; 
+        }
+
+        /* تصميم شريط التمرير */
+        #chat-window::-webkit-scrollbar { width: 8px; }
+        #chat-window::-webkit-scrollbar-track { background: #1f2937; }
+        #chat-window::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        #chat-window::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+        /* فقاعات الدردشة */
+        .chat-bubble { max-width: 85%; padding: 0.75rem 1rem; border-radius: 1.25rem; line-height: 1.6; margin-bottom: 0.75rem; word-break: break-word; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); }
+        .chat-bubble.user { background-color: #10b981; color: white; border-bottom-left-radius: 0.5rem; margin-right: 0; margin-left: auto; }
+        .chat-bubble.assistant { background-color: #374151; color: var(--text-color); border-bottom-right-radius: 0.5rem; margin-left: 0; margin-right: auto; }
+
+        /* =============================================== */
+        /* منطقة الإدخال الجديدة (Gemini-like) */
+        /* =============================================== */
+        .new-input-container {
+            padding: 1rem;
+            background-color: var(--bg-dark);
+            border-top: 1px solid var(--bg-card);
+        }
+        
+        .gemini-input-group {
+            display: flex;
+            align-items: flex-end; 
+            background-color: var(--bg-card);
+            border: 1px solid #4b5563; /* Gray-600 */
+            border-radius: 1rem;
+            padding: 0.5rem 0.5rem 0.5rem 0.5rem; 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            transition: border-color 0.2s;
+        }
+
+        .gemini-input-group:focus-within {
+             border-color: var(--primary-color); /* Emerald Green عند التركيز */
+        }
+        
+        .gemini-input-group textarea {
+            flex-grow: 1;
+            background-color: transparent;
+            border: none;
+            color: var(--text-color);
+            padding: 0.5rem 0.5rem; 
+            outline: none;
+            resize: none; 
+            max-height: 150px; 
+            overflow-y: auto;
+            text-align: right; 
+            line-height: 1.5;
+        }
+
+        .gemini-actions {
+            display: flex;
+            align-items: flex-end;
+            margin-right: 0.5rem; 
+        }
+
+        .gemini-actions button {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 0.25rem; 
+            transition: all 0.2s;
+            flex-shrink: 0; 
+        }
+
+        /* =============================================== */
+        /* تحسينات الحجم لشاشات التلفزيون (Desktop/TV) */
+        /* =============================================== */
+        @media (min-width: 1024px) {
+            /* زيادة حجم الخطوط الأساسية */
+            .app-container {
+                font-size: 1.1rem; 
+            }
+            header h1 {
+                font-size: 2.25rem; /* كبر حجم العنوان */
+            }
+            header button i {
+                 width: 1.5rem; /* تكبير أيقونات الرأس */
+                 height: 1.5rem;
+            }
+            .chat-bubble { 
+                font-size: 1rem; /* تكبير نص الفقاعات قليلاً */
+                padding: 1rem 1.25rem;
+                margin-bottom: 1rem; 
+            }
+            .gemini-input-group textarea {
+                font-size: 1.1rem; /* تكبير خط حقل الإدخال */
+                padding: 1rem 1rem; 
+            }
+            .gemini-actions button {
+                width: 44px; /* تكبير أزرار الإجراءات */
+                height: 44px;
+            }
+            .gemini-actions button i {
+                width: 1.25rem; /* تكبير أيقونات الإجراءات */
+                height: 1.25rem;
+            }
+            .thinking-dots span {
+                width: 10px; /* تكبير مؤشر التفكير */
+                height: 10px;
+            }
+        }
+
+
+        /* مؤشر التفكير - تم تغيير اللون من الأزرق إلى الأخضر الزمردي */
+        .thinking-dots span { 
+            display: inline-block; 
+            width: 8px; 
+            height: 8px; 
+            margin: 0 2px; 
+            border-radius: 50%; 
+            background-color: #34d399; /* Emerald-400 */
+            opacity: 0; 
+            animation: loading-dots 1.5s infinite; 
+        }
+        .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes loading-dots {
+            0% { opacity: 0; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(-4px); }
+            100% { opacity: 0; transform: translateY(0); }
+        }
+
+        /* =============================================== */
+        /* تصميم شاشات البدء (Splash Screens) */
+        /* =============================================== */
+        .splash-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 1; 
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out; 
+            pointer-events: all; 
+        }
+        
+        .splash-hidden {
+             opacity: 0 !important;
+             pointer-events: none !important; 
+        }
+
+        /* حركات الانتقال */
+        #national-splash {
+            background-color: var(--bg-dark); 
+            animation: popIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
+        }
+        
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.95) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .national-splash-exit-transition {
+            animation: popOutUp 0.5s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards !important; 
+        }
+        @keyframes popOutUp {
+            0% { opacity: 1; transform: scale(1) translateY(0); }
+            100% { opacity: 0; transform: scale(0.9) translateY(-50px); }
+        }
+
+
+        .loading-splash-enter-transition {
+            opacity: 0;
+            transform: translateY(-50px);
+            animation: slideDownIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+        }
+        @keyframes slideDownIn {
+            0% { opacity: 0; transform: translateY(-50px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+
+        .loading-splash-exit {
+            opacity: 0 !important;
+            transform: scale(0.95) !important;
+            transition: opacity 0.5s ease-in, transform 0.5s ease-in !important;
+        }
+
+        .saudi-made-text {
+            font-size: 2.5rem; 
+            font-weight: 900;
+            color: var(--saudi-white); 
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 10;
+        }
+        
+        .saudi-emblem {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--bg-dark); 
+        }
+
+        /* =============================================== */
+        /* إصلاح الدائرة الخضراء المتدرجة وعرضها */
+        /* =============================================== */
+        .saudi-emblem::before {
+            content: '';
+            position: absolute;
+            width: 500px; 
+            height: 500px;
+            background: radial-gradient(circle, var(--saudi-green) 0%, rgba(0, 108, 53, 0.6) 30%, rgba(17, 24, 39, 0.0) 70%);
+            border-radius: 50%;
+            opacity: 1;
+            /* للتأكد من ظهورها في البداية عند التحميل */
+            transform: scale(0.1); 
+            transition: all 0.7s cubic-bezier(0.23, 1, 0.32, 1); 
+            z-index: 5;
+        }
+        
+        /* حركة النمو عند بدء التسلسل */
+        .saudi-emblem.grow-in::before {
+            transform: scale(1);
+        }
+
+        /* حركة التلاشي والتقلص عند الخروج */
+        .saudi-emblem.fade-out-shrink::before {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+
+        /* =============================================== */
+        /* دعم CSS لنافذة الدعم الفني - توحيد اللون إلى الأخضر الزمردي */
+        /* =============================================== */
+        #support-chat-window {
+            height: 350px; 
+            overflow-y: auto;
+            background-color: #1f2937;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid #374151;
+        }
+        
+        /* فقاعات الدعم الفني: تم تغيير اللون الأرجواني إلى زمردي */
+        .support-bubble { 
+            max-width: 90%; 
+            padding: 0.6rem 1rem; 
+            border-radius: 1rem; 
+            line-height: 1.4; 
+            margin-bottom: 0.5rem; 
+            word-break: break-word; 
+            font-size: 0.9rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        .support-bubble.support-agent { 
+            background-color: #14b8a6; /* Teal-500 - لون الوكيل */
+            color: white; 
+            border-bottom-right-radius: 0.5rem; 
+            margin-left: 0; 
+            margin-right: auto; 
+        }
+        .support-bubble.support-user { 
+            background-color: #34d399; /* Emerald-400 - لون المستخدم */
+            color: white; 
+            border-bottom-left-radius: 0.5rem; 
+            margin-right: 0; 
+            margin-left: auto; 
+        }
+
+        /* زر الأسئلة المقترحة */
+        .support-suggestion-btn {
+            background-color: #374151;
+            color: #9ca3af;
+            border: 1px solid #4b5563;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s;
+            cursor: pointer;
+            margin-left: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .support-suggestion-btn:hover {
+            background-color: #4b5563;
+        }
+
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-0"> 
+
+    <!-- الشاشة الأولى: شاشة الهوية الوطنية (National Splash Screen) -->
+    <div id="national-splash" class="splash-layer splash-hidden">
+        <div class="saudi-emblem" id="saudi-emblem-bg">
+        </div>
+        <div class="text-center">
+            <p class="saudi-made-text">صناعة سعودية</p>
+        </div>
+    </div>
+    
+    <!-- الشاشة الثانية: شاشة التحميل/التهيئه (Loading/Setup Screen) - تبدأ مخفية بالكامل -->
+    <div id="loading-splash" class="splash-layer splash-hidden">
+        <div class="text-center p-8 rounded-xl bg-gray-900/70 border border-gray-700 shadow-xl">
+            <!-- Loader Placeholder - تم تغيير اللون من الأزرق إلى الزمردي -->
+            <svg class="animate-spin h-8 w-8 text-emerald-500 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-xl font-medium text-gray-200">جارٍ إعداد بيئة ذكي...</p>
+            <p id="loading-status" class="text-sm text-gray-400 mt-2">تهيئة قاعدة البيانات قيد التنفيذ.</p>
+        </div>
+    </div>
+
+    <!-- حاوية التطبيق الرئيسية - تبدأ مخفية -->
+    <div id="app-container" class="app-container hidden">
+        
+        <!-- رأس التطبيق النظيف والمبسط -->
+        <header class="p-4 md:p-5 bg-gray-900 border-b border-gray-700 flex justify-between items-center shadow-lg">
+            <h1 class="text-2xl font-extrabold text-gray-100 flex items-center">
+                <!-- تم تغيير الأيقونة من الأحمر إلى الزمردي -->
+                <i data-lucide="sparkles" class="w-6 h-6 text-emerald-500 ml-2"></i>
+                ذكي <span class="text-sm font-light text-emerald-400 mr-2">v1.0</span> <!-- **تم التحديث إلى V1.0** -->
+            </h1>
+            <div class="flex items-center space-x-2 space-x-reverse">
+                <!-- زر الدعم الفني -->
+                 <button id="support-btn" class="p-2 text-gray-300 hover:text-emerald-400 transition duration-150 rounded-md bg-gray-700 hover:bg-gray-600" onclick="showSupportModal()">
+                    <i data-lucide="message-square-text" class="w-5 h-5"></i>
+                </button>
+                <!-- زر المشاركة -->
+                <button id="share-btn" class="p-2 text-gray-300 hover:text-emerald-400 transition duration-150 rounded-md bg-gray-700 hover:bg-gray-600" onclick="showShareModal()">
+                    <i data-lucide="share-2" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- منطقة المحادثة -->
+        <div id="chat-window" class="space-y-4">
+            <!-- رسالة الترحيب (تظهر عندما تكون المحادثة فارغة) -->
+            <div id="welcome-message" class="absolute inset-0 flex items-center justify-center p-8 pointer-events-none z-10">
+                <div class="text-center text-gray-400">
+                    <!-- تم تغيير الأيقونة من الأحمر إلى الزمردي -->
+                    <i data-lucide="message-square" class="w-10 h-10 text-emerald-500 mx-auto mb-4"></i>
+                    <p class="text-lg font-medium">مرحباً بك! أنا ذكي، جاهز لبدء المحادثة.</p>
+                    <p class="text-sm mt-2">ابدأ محادثتك الأولى، أو استخدم ميزة المايكروفون للإدخال الصوتي.</p>
+                </div>
+            </div>
+            <!-- الرسائل تُضاف هنا -->
+        </div>
+
+
+        <!-- منطقة معلومات الحالة - تم تغيير اللون النصي إلى الزمردي -->
+        <div id="status-area" class="p-2 text-sm text-center text-emerald-400 bg-gray-900 hidden flex items-center justify-center border-t border-gray-700">
+             <span id="status-text" class="mr-2">...</span>
+             <!-- مؤشر التفكير المتحرك (●●●) -->
+             <div id="thinking-indicator" class="thinking-dots hidden">
+                <span>●</span>
+                <span>●</span>
+                <span>●</span>
+             </div>
+        </div>
+
+        <!-- منطقة الإدخال الجديدة بشكل "Gemini-like" -->
+        <div class="new-input-container">
+            <div class="gemini-input-group">
+                
+                 <!-- زر الإرسال (أخضر زمردي) - يوضع في الزاوية اليسرى في تصميم RTL -->
+                <div class="gemini-actions order-3"> 
+                    <!-- تم تغيير اللون من الأزرق إلى الزمردي -->
+                    <button id="send-btn" class="text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700" onclick="sendMessage()" disabled>
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- حقل الإدخال النصي -->
+                <textarea id="chat-input" placeholder="اكتب رسالتك هنا..." class="text-base" rows="1" dir="rtl" oninput="window.autoExpand(this); window.validateInput();"></textarea>
+
+                <!-- زر المايكروفون (أحمر) - تم الإبقاء عليه للوظيفة -->
+                <div class="gemini-actions order-1"> 
+                    <button id="voice-btn" class="text-white focus:outline-none focus:ring-2 focus:ring-red-500 bg-red-600 hover:bg-red-700" onclick="window.toggleVoiceInput()">
+                        <i id="mic-icon" data-lucide="mic" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Sharing -->
+    <div id="share-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full max-w-md" dir="rtl">
+            <h3 class="text-xl font-bold text-gray-100 mb-4 border-b border-gray-700 pb-2">مشاركة المحادثة</h3>
+            <p class="text-gray-300 mb-4">يمكنك مشاركة المحادثة عبر هذا الرابط الفريد لمعرّف الجلسة.</p>
+            <div class="flex">
+                <input type="text" id="share-link-input" readonly class="flex-grow p-3 bg-gray-700 text-gray-100 rounded-r-xl border-l-0 border border-gray-600 outline-none text-sm" value="...جارٍ التحميل">
+                <button id="copy-btn" class="p-3 bg-emerald-600 text-white rounded-l-xl hover:bg-emerald-700 transition duration-150 font-medium" onclick="window.copyShareLink()">
+                    نسخ
+                </button>
+            </div>
+            <p id="copy-message" class="text-sm mt-2 text-emerald-400 hidden">تم النسخ بنجاح!</p>
+            <button class="mt-6 w-full p-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition duration-150" onclick="window.hideShareModal()">
+                إغلاق
+            </button>
+        </div>
+    </div>
+    
+    <!-- Modal for Support Chat (الدعم الفني) - تم توحيد اللون إلى الزمردي -->
+    <div id="support-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl w-full max-w-lg transition-all duration-300" dir="rtl">
+            <h3 class="text-xl font-bold text-gray-100 mb-4 border-b border-emerald-700 pb-2 flex items-center">
+                 <!-- تم تغيير الأيقونة من الأرجواني إلى الزمردي -->
+                 <i data-lucide="message-square-text" class="w-6 h-6 text-emerald-400 ml-2"></i>
+                 التواصل مع الدعم الفني
+            </h3>
+
+            <!-- نافذة الدردشة مع الدعم -->
+            <div id="support-chat-window">
+                <!-- رسائل الدعم الفني تظهر هنا -->
+            </div>
+            
+            <!-- الأسئلة المقترحة -->
+            <div id="support-suggestions" class="mb-4 flex flex-wrap justify-end">
+                <button class="support-suggestion-btn" onclick="window.sendSupportMessage('التطبيق لا يستجيب')">التطبيق لا يستجيب</button>
+                <button class="support-suggestion-btn" onclick="window.sendSupportMessage('مشكلة في حفظ المحادثات')">مشكلة في حفظ المحادثات</button>
+                <button class="support-suggestion-btn" onclick="window.sendSupportMessage('أحتاج مساعدة عامة')">أحتاج مساعدة عامة</button>
+            </div>
+
+            <!-- منطقة إدخال الدعم -->
+            <div class="flex">
+                <input type="text" id="support-input" placeholder="صف مشكلتك هنا..." class="flex-grow p-3 bg-gray-700 text-gray-100 rounded-r-xl outline-none text-sm" dir="rtl">
+                <!-- تم تغيير اللون من الأرجواني إلى الزمردي -->
+                <button id="support-send-btn" class="p-3 bg-emerald-600 text-white rounded-l-xl hover:bg-emerald-700 transition duration-150 font-medium" onclick="window.sendSupportMessage(document.getElementById('support-input').value)">
+                    إرسال
+                </button>
+            </div>
+            
+            <button class="mt-6 w-full p-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition duration-150" onclick="window.hideSupportModal()">
+                إغلاق
+            </button>
+        </div>
+    </div>
+    
+    <!-- Modal for Errors -->
+    <div id="error-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50 p-4">
+        <div class="bg-red-900 p-6 rounded-xl shadow-2xl w-full max-w-md border-2 border-red-700" dir="rtl">
+            <h3 class="text-xl font-bold text-red-300 mb-4 border-b border-red-700 pb-2 flex items-center">
+                 <i data-lucide="alert-triangle" class="w-6 h-6 ml-2"></i>
+                 خطأ فني
+            </h3>
+            <p id="error-modal-message" class="text-red-100 mb-4 text-base leading-relaxed">حدث خطأ غير متوقع.</p>
+            <button class="mt-4 w-full p-3 bg-red-700 text-white rounded-xl hover:bg-red-800 transition duration-150 font-medium" onclick="window.hideErrorModal()">
+                حسناً
+            </button>
+        </div>
+    </div>
+    
+
+    <!-- تضمين مكتبات Firebase الأساسية -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, collection, query, addDoc, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ===============================================
+        // تهيئة المتغيرات والثوابت
+        // ===============================================
+        setLogLevel('Debug');
+        
+        // متوفرة عالمياً في بيئة Canvas
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        let app, db, auth, userId, docId;
+        let chatCollectionRef;
+        let chatHistory = [];
+        let supportChatHistory = []; 
+        let isSpeaking = false;
+        let isListening = false;
+        let isSending = false;
+        let speechRecognition;
+        
+        // عناصر DOM
+        const chatWindow = document.getElementById('chat-window');
+        const statusArea = document.getElementById('status-area');
+        const micIcon = document.getElementById('mic-icon');
+        const voiceBtn = document.getElementById('voice-btn');
+        const sendBtn = document.getElementById('send-btn');
+        const chatInput = document.getElementById('chat-input');
+        const nationalSplash = document.getElementById('national-splash');
+        const loadingSplash = document.getElementById('loading-splash');
+        const saudiEmblemBg = document.getElementById('saudi-emblem-bg');
+        const appContainer = document.getElementById('app-container');
+        const thinkingIndicator = document.getElementById('thinking-indicator');
+        const supportChatWindow = document.getElementById('support-chat-window');
+        const loadingStatusText = document.getElementById('loading-status');
+        
+        let isAuthReady = false; 
+
+        // ===============================================
+        // دوال المساعدة: تحويل الصوت (PCM -> WAV)
+        // ===============================================
+
+        // دالة لتحويل Base64 إلى ArrayBuffer
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        // دالة لتحويل PCM إلى WAV Blob
+        function pcmToWav(pcm16, sampleRate) {
+            const numChannels = 1;
+            const bytesPerSample = 2; // 16-bit PCM
+
+            const buffer = new ArrayBuffer(44 + pcm16.length * bytesPerSample);
+            const view = new DataView(buffer);
+            let offset = 0;
+
+            // RIFF chunk descriptor
+            writeString(view, offset, 'RIFF'); offset += 4;
+            view.setUint32(offset, 36 + pcm16.length * bytesPerSample, true); offset += 4; // ChunkSize
+            writeString(view, offset, 'WAVE'); offset += 4;
+
+            // fmt chunk
+            writeString(view, offset, 'fmt '); offset += 4;
+            view.setUint32(offset, 16, true); offset += 4; // Subchunk1Size (16 for PCM)
+            view.setUint16(offset, 1, true); offset += 2; // AudioFormat (1 for PCM)
+            view.setUint16(offset, numChannels, true); offset += 2; // NumChannels
+            view.setUint32(offset, sampleRate, true); offset += 4; // SampleRate
+            view.setUint32(offset, sampleRate * numChannels * bytesPerSample, true); offset += 4; // ByteRate
+            view.setUint16(offset, numChannels * bytesPerSample, true); offset += 2; // BlockAlign
+            view.setUint16(offset, 16, true); offset += 2; // BitsPerSample
+
+            // data chunk
+            writeString(view, offset, 'data'); offset += 4;
+            view.setUint32(offset, pcm16.length * bytesPerSample, true); offset += 4; // Subchunk2Size
+
+            // Write PCM data
+            for (let i = 0; i < pcm16.length; i++, offset += 2) {
+                view.setInt16(offset, pcm16[i], true);
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+
+            function writeString(view, offset, string) {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            }
+        }
+
+
+        // ===============================================
+        // دوال واجهة المستخدم والنوافذ المنبثقة (Modals)
+        // ===============================================
+
+        window.showErrorModal = function(message) {
+            document.getElementById('error-modal-message').innerHTML = message;
+            document.getElementById('error-modal').classList.remove('hidden');
+            document.getElementById('error-modal').classList.add('flex');
+        };
+
+        window.hideErrorModal = function() {
+            document.getElementById('error-modal').classList.add('hidden');
+            document.getElementById('error-modal').classList.remove('flex');
+        };
+        
+        window.showShareModal = function() {
+            const linkInput = document.getElementById('share-link-input');
+            const link = `${window.location.origin}/chat/${docId}`;
+            linkInput.value = link;
+            document.getElementById('copy-message').classList.add('hidden');
+            document.getElementById('share-modal').classList.remove('hidden');
+            document.getElementById('share-modal').classList.add('flex');
+            linkInput.select();
+        };
+
+        window.hideShareModal = function() {
+            document.getElementById('share-modal').classList.add('hidden');
+            document.getElementById('share-modal').classList.remove('flex');
+        };
+
+        window.copyShareLink = function() {
+            const linkInput = document.getElementById('share-link-input');
+            
+            navigator.clipboard.writeText(linkInput.value).then(() => {
+                const msg = document.getElementById('copy-message');
+                msg.textContent = 'تم النسخ بنجاح! يمكن مشاركة هذا الرابط.';
+                msg.classList.remove('hidden');
+            }).catch(err => {
+                linkInput.focus();
+                linkInput.select();
+                try {
+                    document.execCommand('copy');
+                    const msg = document.getElementById('copy-message');
+                    msg.textContent = 'تم النسخ بنجاح (باستخدام الطريقة الاحتياطية)!';
+                    msg.classList.remove('hidden');
+                } catch (e) {
+                    window.showErrorModal('فشل في النسخ التلقائي. يرجى النسخ يدوياً.');
+                }
+            });
+        };
+        
+        // ***********************************************
+        // دوال نافذة الدعم الفني (Support Modal Functions)
+        // ***********************************************
+        
+        // دالة لعرض رسالة في نافذة الدعم الفني
+        function addSupportMessageToUI(text, role) {
+            const messageElement = document.createElement('div');
+            const bubbleClass = role === 'user' ? 'support-user' : 'support-agent'; 
+            
+            messageElement.classList.add('support-bubble', bubbleClass, 'mt-1', 'shadow-md');
+            messageElement.textContent = text;
+            
+            supportChatWindow.appendChild(messageElement);
+            supportChatWindow.scrollTop = supportChatWindow.scrollHeight;
+        }
+
+        function initSupportChat() {
+            // رسالة الترحيب من الدعم الفني (إذا كانت المحادثة فارغة)
+            if (supportChatHistory.length === 0) {
+                addSupportMessageToUI("مرحباً بك، أنا وكيل الدعم الفني الافتراضي. كيف يمكنني مساعدتك في حل مشكلتك التقنية اليوم؟", 'agent');
+            } else {
+                // إعادة رسم السجل إذا كان موجوداً
+                supportChatWindow.innerHTML = '';
+                supportChatHistory.forEach(msg => addSupportMessageToUI(msg.text, msg.role));
+            }
+        }
+        
+        window.showSupportModal = function() {
+            initSupportChat();
+            const modal = document.getElementById('support-modal');
+            const modalContent = modal.querySelector('div:first-child');
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // تطبيق حركة الدخول
+            modalContent.style.opacity = 0;
+            modalContent.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                modalContent.style.transition = 'all 0.3s ease-out';
+                modalContent.style.opacity = 1;
+                modalContent.style.transform = 'translateY(0)';
+            }, 50);
+        };
+
+        window.hideSupportModal = function() {
+            const modal = document.getElementById('support-modal');
+            const modalContent = modal.querySelector('div:first-child');
+            
+            // تطبيق حركة الخروج
+            modalContent.style.opacity = 0;
+            modalContent.style.transform = 'translateY(20px)';
+            modalContent.style.transition = 'all 0.3s ease-in';
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        };
+        
+        window.sendSupportMessage = function(userText) {
+            const inputElement = document.getElementById('support-input');
+            let message = userText;
+
+            if (typeof userText !== 'string' || userText.trim() === '') {
+                 message = inputElement.value.trim();
+                 if (message === '') return;
+            }
+
+            // 1. إضافة رسالة المستخدم
+            addSupportMessageToUI(message, 'user');
+            supportChatHistory.push({text: message, role: 'user'});
+            inputElement.value = '';
+
+            // 2. إرسال رد الدعم الفني الوهمي
+            setTimeout(() => {
+                const agentResponse = `عزيزي العميل، شكراً لتواصلك. هذه النسخة التجريبية لا تتضمن حالياً فريق دعم فني بشري متوفر للرد المباشر. يرجى توضيح مشكلتك في رسالة مفصلة، وسنحاول أن نقدم لك حلاً مبنياً على البيانات المتاحة. ما هي مشكلتك بالتحديد؟`;
+
+                addSupportMessageToUI(agentResponse, 'agent');
+                supportChatHistory.push({text: agentResponse, role: 'agent'});
+            }, 1000); 
+        };
+        
+        document.getElementById('support-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                window.sendSupportMessage(this.value);
+            }
+        });
+
+
+        // تحديث حالة الواجهة
+        function setUIState(listening, speaking, sending) {
+            isListening = listening;
+            isSpeaking = speaking;
+            isSending = sending;
+            
+            const isBusy = listening || speaking || sending;
+            
+            // التأكد من أن حقل الإدخال وزر الإرسال يتم تعطيلهما عند الانشغال
+            chatInput.disabled = isBusy;
+            // التحقق من صحة الإدخال يتم بواسطة validateInput الآن، وليس هنا
+            sendBtn.disabled = isBusy || chatInput.value.trim() === ''; 
+            voiceBtn.disabled = isBusy && !listening; // يمكن تفعيل زر الصوت فقط إذا كنا في وضع الاستماع
+
+            
+            document.getElementById('support-btn').disabled = isBusy; 
+
+            if (isBusy) {
+                statusArea.classList.remove('hidden');
+                statusArea.classList.add('flex');
+            } else {
+                statusArea.classList.add('hidden');
+                statusArea.classList.remove('flex');
+            }
+            
+            thinkingIndicator.classList.toggle('hidden', !sending);
+            
+            // تحديث رموز الأزرار والألوان
+            if (listening) {
+                micIcon.dataset.lucide = "ear";
+                voiceBtn.classList.remove('bg-red-600', 'hover:bg-red-700', 'animate-spin');
+                voiceBtn.classList.add('bg-yellow-500', 'animate-pulse');
+                document.getElementById('status-text').textContent = "ذكي يستمع...";
+            } else if (speaking) {
+                micIcon.dataset.lucide = "volume-2";
+                voiceBtn.classList.remove('bg-yellow-500', 'animate-pulse', 'animate-spin');
+                voiceBtn.classList.add('bg-red-600', 'animate-pulse');
+                document.getElementById('status-text').textContent = "ذكي يتحدث...";
+            } else if (sending) {
+                micIcon.dataset.lucide = "loader";
+                voiceBtn.classList.remove('bg-yellow-500', 'animate-pulse');
+                voiceBtn.classList.add('bg-red-600', 'animate-spin');
+                document.getElementById('status-text').textContent = "ذكي يفكر..."; 
+            } else {
+                micIcon.dataset.lucide = "mic";
+                voiceBtn.classList.remove('animate-pulse', 'animate-spin', 'bg-yellow-500');
+                voiceBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                // إعادة تعيين لون زر الإرسال إلى الزمردي
+                sendBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+            }
+
+            lucide.createIcons(); // مهم لتحديث الأيقونات بعد تغيير dataset
+        }
+
+        // إنشاء فقاعة المحادثة وإضافتها
+        function addMessageToUI(text, role) { 
+            const messageElement = document.createElement('div');
+            const bubbleClass = role; 
+            
+            messageElement.classList.add('chat-bubble', bubbleClass);
+            
+            let formattedText = text;
+            formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'); 
+            
+            let isList = false;
+            // تقسيم النص والتعامل مع القوائم النقطية
+            formattedText = formattedText.split('\n').map(line => {
+                // إزالة علامة النقطة إذا كانت موجودة (لضمان عرض قوائم Markdown)
+                if (line.trim().startsWith('- ')) {
+                    isList = true;
+                    return `<li>${line.trim().substring(2).trim()}</li>`;
+                }
+                return line;
+            }).join('\n');
+            
+            if (isList) {
+                // تجميع العناصر المتتالية في وسم <ul>
+                formattedText = formattedText.replace(/(\n|^)(<li>.*?<\/li>(\n|$) *)+/gs, (match) => {
+                    return `<ul>${match.trim().replace(/\n/g, '')}</ul>\n`;
+                });
+                formattedText = formattedText.replace(/(\n\s*){2,}/g, '\n\n'); 
+            }
+            
+            messageElement.innerHTML = formattedText;
+            chatWindow.appendChild(messageElement);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        // ===============================================
+        // دوال Firebase والتخزين
+        // ===============================================
+
+        // دالة مساعدة لعرض شاشة التحميل (التهيئه) بشكل حاد
+        function showLoadingSplash() {
+            loadingSplash.classList.remove('splash-hidden', 'hidden');
+            loadingSplash.classList.add('loading-splash-enter-transition'); // تطبيق حركة الدخول
+            appContainer.classList.add('hidden'); 
+            loadingStatusText.textContent = "تهيئة قاعدة البيانات قيد التنفيذ.";
+            console.log("Showing Loading Splash...");
+        }
+
+        // دالة مساعدة لإخفاء شاشة التحميل وعرض التطبيق
+        function hideLoadingSplash() {
+            // تطبيق حركة الخروج (الإنكماش والتلاشي)
+            loadingSplash.classList.add('loading-splash-exit');
+
+            // الانتظار لانتهاء انتقال الشفافية
+            setTimeout(() => {
+                loadingSplash.classList.add('hidden');
+                appContainer.classList.remove('hidden'); 
+                document.body.style.overflow = 'hidden'; /* تم التأكد من إبقاء Body مخفياً لمنع أشرطة التمرير غير الضرورية */
+                lucide.createIcons(); 
+                console.log("App Container Loaded.");
+            }, 500); // 500ms لتزامن الحركة مع الـ transition
+        }
+
+        // تهيئة Firebase والمصادقة
+        async function initializeFirebase() {
+            try {
+                if (!firebaseConfig.apiKey) {
+                    throw new Error("لم يتم توفير إعدادات Firebase.");
+                }
+
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                await setPersistence(auth, browserSessionPersistence);
+
+                loadingStatusText.textContent = "جاري المصادقة...";
+                await new Promise(resolve => {
+                    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+                        if (!user) {
+                            if (initialAuthToken) {
+                                await signInWithCustomToken(auth, initialAuthToken);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                        }
+                        userId = auth.currentUser?.uid || crypto.randomUUID();
+                        console.log("Firebase Authenticated. User ID:", userId);
+                        unsubscribe();
+                        resolve();
+                    });
+                });
+
+                docId = 'main_chat_session'; 
+                chatCollectionRef = collection(db, `/artifacts/${appId}/users/${userId}/allam_chat_history`);
+                
+                document.getElementById('share-link-input').value = `${window.location.origin}/chat/${docId}`;
+                
+                loadingStatusText.textContent = "تحميل سجل المحادثات...";
+                await setupChatListener(); 
+                isAuthReady = true;
+
+                hideLoadingSplash(); 
+
+            } catch (error) {
+                console.error("خطأ في تهيئة Firebase:", error);
+                loadingStatusText.textContent = "فشل في تهيئة قاعدة البيانات.";
+                window.showErrorModal("فشل في تهيئة قاعدة البيانات أو المصادقة. يرجى التحقق من إعدادات Firebase.");
+                isAuthReady = true;
+                setTimeout(hideLoadingSplash, 3000); 
+            }
+        }
+        
+        // إعداد المستمع للتحديثات في الوقت الفعلي
+        function setupChatListener() {
+            return new Promise((resolve) => {
+                if (!chatCollectionRef) {
+                    resolve(); 
+                    return;
+                }
+                
+                const q = query(chatCollectionRef);
+                
+                const initialUnsubscribe = onSnapshot(q, (snapshot) => {
+                    const newHistory = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.timestamp) {
+                           newHistory.push({...data, id: doc.id});
+                        }
+                    });
+
+                    newHistory.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis());
+                    
+                    if (newHistory.length !== chatHistory.length) {
+                        chatHistory = newHistory;
+                        renderChatHistory();
+                        setUIState(isListening, isSpeaking, isSending); 
+                    }
+                    
+                    if (!isAuthReady) {
+                        resolve();
+                    }
+
+                }, (error) => {
+                    console.error("خطأ في الاستماع لتحديثات Firestore:", error);
+                    resolve();
+                });
+            });
+        }
+        
+        // إعادة بناء سجل المحادثات في الواجهة
+        function renderChatHistory() {
+            chatWindow.innerHTML = '';
+            const welcomeMessage = document.getElementById('welcome-message');
+
+            if (chatHistory.length === 0) {
+                 welcomeMessage.classList.remove('hidden');
+            } else {
+                 welcomeMessage.classList.add('hidden');
+            }
+            
+            chatHistory.forEach(msg => {
+                addMessageToUI(msg.text, msg.role);
+            });
+        }
+        
+        // إضافة رسالة إلى Firestore
+        async function saveMessage(text, role) {
+            try {
+                 await addDoc(chatCollectionRef, {
+                    text: text,
+                    role: role,
+                    timestamp: serverTimestamp()
+                });
+            } catch (error) {
+                console.error("خطأ في حفظ الرسالة:", error);
+                window.showErrorModal("فشل في حفظ الرسالة إلى قاعدة البيانات.");
+            }
+        }
+        
+        // ===============================================
+        // دوال الذكاء الاصطناعي والإدخال الصوتي
+        // ===============================================
+
+        async function callGeminiApi(payload, model = 'gemini-2.5-flash-preview-09-2025') {
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            
+            let response;
+            let data;
+            let retries = 0;
+            const maxRetries = 3;
+            let delay = 1000;
+
+            while (retries < maxRetries) {
+                try {
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        data = await response.json();
+                        return data;
+                    } else if (response.status === 429) {
+                        throw new Error('Rate limit exceeded. Retrying...');
+                    } else {
+                        throw new Error(`API Error: ${response.statusText} (${response.status})`);
+                    }
+                } catch (error) {
+                    retries++;
+                    if (retries >= maxRetries) {
+                        throw error;
+                    }
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2; 
+                }
+            }
+        }
+
+        // تهيئة خدمة التعرف على الكلام (Speech Recognition)
+        function initSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                window.showErrorModal("للأسف، لا يدعم متصفحك إدخال الصوت (Speech Recognition).");
+                voiceBtn.disabled = true;
+                return null;
+            }
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            
+            recognition.continuous = false; 
+            recognition.lang = 'ar-SA'; 
+            recognition.interimResults = false; 
+
+            recognition.onstart = () => {
+                setUIState(true, false, false);
+                console.log('Voice recognition started...');
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                chatInput.value = transcript;
+                window.autoExpand(chatInput); // توسيع الحقل بعد إضافة النص
+                window.validateInput(); 
+                setUIState(false, false, false);
+                
+                // التأكد من أن النص ليس فارغاً قبل الإرسال التلقائي
+                if (transcript.trim() !== '') {
+                    setTimeout(() => {
+                        window.sendMessage(true); 
+                    }, 500); 
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                setUIState(false, false, false); 
+                
+                let errorMessage;
+                
+                if (event.error === 'not-allowed') {
+                    errorMessage = `تم رفض الوصول إلى الميكروفون. يرجى التأكد من النقر على زر "سماح" عند طلب المتصفح الإذن لأول مرة، والتحقق من إعدادات متصفحك أو نظام تشغيلك للسماح للموقع بالوصول إلى المايكروفون.`;
+                } else if (event.error !== 'no-speech') {
+                    errorMessage = `حدث خطأ في التعرف على الصوت: ${event.error}.`;
+                } else {
+                    return; 
+                }
+                
+                window.showErrorModal(errorMessage);
+            };
+
+            recognition.onend = () => {
+                setUIState(false, false, false);
+            };
+
+            return recognition;
+        }
+        
+        window.toggleVoiceInput = function() {
+            if (!speechRecognition) {
+                speechRecognition = initSpeechRecognition();
+                if (!speechRecognition) return;
+            }
+            
+            if (isListening) {
+                speechRecognition.stop();
+            } else {
+                speechRecognition.start();
+            }
+        };
+
+
+        window.sendMessage = async function(voiceOutput = false) {
+            // خطأ منطقي تم إصلاحه: منع الإرسال إذا كان التطبيق مشغولاً بالفعل
+            if (isSending || isListening || isSpeaking) return;
+
+            const userText = chatInput.value.trim();
+            if (!userText) return;
+
+            chatInput.value = '';
+            chatInput.rows = 1; // إعادة تعيين الحجم
+            setUIState(false, false, true); 
+
+            await saveMessage(userText, 'user');
+            
+            const contents = chatHistory.map(msg => ({
+                role: msg.role === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.text }]
+            }));
+            // لا حاجة لإضافة userText هنا لأن onSnapshot سيجلب الرسالة التي تم حفظها بالفعل
+            // contents.push({ role: 'user', parts: [{ text: userText }] }); 
+
+            const systemPrompt = `
+                أنت "ذكي"، مساعد شخصي ذكي وودود وناطق باللغة العربية.
+                مهمتك هي تقديم إجابات دقيقة ومفيدة، مع التركيز على فهم السياق والتفاصيل الثقافية المحلية في المنطقة العربية.
+                تذكّر أن المستخدم يطلب منك تذكّر تفاصيل محادثاته السابقة.
+                يجب أن تكون إجابتك سلسة، احترافية، وبعيدة عن الأخطاء.
+                استخدم اللغة العربية الفصحى أو لهجة عربية سلسة.
+                إذا كان الرد مرتبطاً بموضوعات سابقة مثل تصميم التطبيق، فاستخدم أسلوباً رسمياً ومركزاً.
+            `;
+            
+            const payload = {
+                contents: contents,
+                tools: [{ "google_search": {} }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            try {
+                const data = await callGeminiApi(payload);
+                
+                const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "عذراً، لم أتمكن من الحصول على رد واضح.";
+                
+                await saveMessage(responseText, 'assistant');
+
+                if (voiceOutput) {
+                    await speakResponse(responseText);
+                }
+
+            } catch (error) {
+                console.error("خطأ في الاتصال بـ Gemini API:", error);
+                window.showErrorModal("حدث خطأ أثناء التواصل مع الذكاء الاصطناعي.");
+            } finally {
+                // التأكد من إنهاء حالة الإرسال في جميع الأحوال
+                if (!isSpeaking) {
+                     setUIState(false, false, false);
+                }
+            }
+        };
+        
+        async function speakResponse(text) {
+             setUIState(false, true, false); 
+
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: text }]
+                }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: "Kore" } 
+                        }
+                    }
+                },
+                model: "gemini-2.5-flash-preview-tts"
+            };
+
+            let audio;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) throw new Error(`TTS API failed with status ${response.status}`);
+
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData && mimeType && mimeType.startsWith("audio/L16")) {
+                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                    var sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
+
+                    const pcmData = base64ToArrayBuffer(audioData);
+                    const pcm16 = new Int16Array(pcmData); 
+                    
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    
+                    audio = new Audio(audioUrl);
+                    audio.play();
+
+                    audio.onended = () => {
+                        setUIState(false, false, false);
+                        URL.revokeObjectURL(audioUrl);
+                    };
+                    
+                    audio.onerror = (e) => {
+                        console.error('Audio playback error', e);
+                        window.showErrorModal("فشل تشغيل الصوت. يرجى مراجعة إعدادات الصوت.");
+                        setUIState(false, false, false);
+                    }
+
+                } else {
+                    throw new Error("TTS response missing audio data or invalid format.");
+                }
+
+            } catch (error) {
+                console.error("خطأ في TTS:", error);
+                setUIState(false, false, false);
+            }
+        }
+        
+        // ***********************************************
+        // الإصلاح (2) والتحسين (3): تعريف الدوال الثابتة على مستوى النافذة
+        // ***********************************************
+
+        // دالة لتوسيع حقل النص تلقائياً (الآن Window.autoExpand)
+        window.autoExpand = function(field) {
+            // إعادة تعيين الارتفاع إلى 1 سطر أولاً، ثم تعيين الارتفاع الجديد
+            field.style.height = 'auto';
+            field.style.height = (field.scrollHeight) + 'px';
+        };
+        
+        // دالة للتحقق من الإدخال وتفعيل/تعطيل زر الإرسال (الآن Window.validateInput)
+        window.validateInput = function() {
+            // يتم تعطيل الزر فقط إذا كان الحقل فارغاً، أو إذا كان التطبيق مشغولاً بالاستماع/الإرسال/التحدث
+            sendBtn.disabled = chatInput.value.trim() === '' || isListening || isSpeaking || isSending;
+        };
+
+        chatInput.addEventListener('keypress', function(e) {
+            // الإرسال بزر Enter دون Shift
+            if (e.key === 'Enter' && !e.shiftKey && !sendBtn.disabled) {
+                e.preventDefault(); 
+                window.sendMessage();
+            }
+        });
+        
+        // تم نقل الـ listener إلى oninput في HTML، ولكن يتم إبقاؤه هنا للاحتياط.
+        // chatInput.addEventListener('input', window.validateInput);
+        
+        // ===============================================
+        // التحكم في تسلسل الشاشات
+        // ===============================================
+        
+        const DURATION_NATIONAL_SPLASH = 5000; // 5 ثواني
+
+        function handleSplashSequence() {
+            console.log("Starting Splash Sequence...");
+            nationalSplash.classList.remove('splash-hidden');
+
+            // 1. الدائرة الخضراء تنمو بسرعة لتظهر
+            setTimeout(() => {
+                // تفعيل الحركة بإضافة كلاس يغير قيمة transform: scale
+                saudiEmblemBg.classList.add('grow-in'); 
+                console.log("Saudi Emblem Grow-In started.");
+            }, 100); 
+
+            // 2. قبل انتهاء الـ 5 ثوانٍ، تبدأ الدائرة الخضراء في التلاشي والانسحاب
+            setTimeout(() => {
+                saudiEmblemBg.classList.add('fade-out-shrink');
+                console.log("Saudi Emblem Fade-Out started.");
+            }, DURATION_NATIONAL_SPLASH - 700);
+
+
+            // 3. عند انتهاء الـ 5 ثوانٍ تماماً، تشغيل حركة الخروج للشاشة الوطنية وحركة الدخول لشاشة التهيئة.
+            setTimeout(() => {
+                // حركة الخروج: الشاشة الوطنية تصعد وتتقلص
+                nationalSplash.classList.add('national-splash-exit-transition');
+                
+                // ظهور شاشة التهيئة مع حركة النزول
+                showLoadingSplash(); 
+                
+                // بدء تهيئة Firebase في الخلفية فوراً
+                initializeFirebase();
+                
+                // إخفاء الشاشة الوطنية بعد انتهاء حركتها
+                setTimeout(() => {
+                    nationalSplash.classList.add('hidden');
+                }, 500); // 500ms هو مدة انتقال الحركة popOutUp
+                
+            }, DURATION_NATIONAL_SPLASH); 
+        }
+
+
+        // ===============================================
+        // نقطة البدء عند تحميل النافذة
+        // ===============================================
+        window.onload = function() {
+            lucide.createIcons();
+            handleSplashSequence(); // بدء تسلسل الشاشات
+        };
+
+    </script>
+</body>
+</html>
+
