@@ -635,7 +635,7 @@
         // ===============================================
 
         window.showErrorModal = function(message) {
-            document.getElementById('error-modal-message').innerHTML = message;
+            document.getElementById('error-modal-message').textContent = String(message ?? '');
             document.getElementById('error-modal').classList.remove('hidden');
             document.getElementById('error-modal').classList.add('flex');
         };
@@ -833,7 +833,11 @@
             
             messageElement.classList.add('chat-bubble', bubbleClass);
             
-            let formattedText = text;
+            // Escape all untrusted message text before applying safe formatting tags.
+            const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[char]);
+            let formattedText = escapeHtml(text);
             formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'); 
             
             let isList = false;
